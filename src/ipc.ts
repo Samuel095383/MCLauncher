@@ -18,6 +18,30 @@ import type {
   IProfile
 } from 'eml-lib'
 
+// temp types until eml-lib exports them
+export interface ISkin {
+  id: string
+  url: string
+  state: 'active' | 'inactive'
+  variant: 'classic' | 'slim'
+}
+
+export interface ICape {
+  id: string
+  url: string
+  state: 'active' | 'inactive'
+  alias: string
+}
+
+export interface IAvatar {
+  id: string
+  /**
+   * May be `null` if the `Skin` class is initialized from the main process.
+   */
+  url: string | null
+}
+
+
 declare global {
   interface Window {
     api: {
@@ -25,6 +49,17 @@ declare global {
         login: () => Promise<IAuthResponse>
         refresh: () => Promise<IAuthResponse>
         logout: () => Promise<{ success: boolean }>
+      }
+      skin: {
+        reload: (account?: Account) => Promise<void | null>
+        getSkin: (account?: Account) => Promise<ISkin[] | null>
+        getCape: (account?: Account) => Promise<ICape[] | null>
+        getAvatar: (account?: Account) => Promise<IAvatar | null>
+        updateSkin: (source: string | Blob, model?: 'classic' | 'slim') => Promise<ISkin[] | null>
+        updateCape: (source: string | Blob) => Promise<ICape[] | null>
+        switchCape: (id: string) => Promise<ICape[] | null>
+        deleteCape: () => Promise<ICape[] | null>
+        hideCape: () => Promise<ICape[] | null>
       }
       profiles: {
         get: () => Promise<IProfile[]>
@@ -106,6 +141,18 @@ export const auth = {
   refresh: async () => await window.api.auth.refresh()
 }
 
+export const skin = {
+  reload: async (account?: Account) => await window.api.skin.reload(account),
+  getSkin: async (account?: Account) => await window.api.skin.getSkin(account),
+  getCape: async (account?: Account) => await window.api.skin.getCape(account),
+  getAvatar: async (account?: Account) => await window.api.skin.getAvatar(account),
+  updateSkin: async (source: string | Blob, model: 'classic' | 'slim') => await window.api.skin.updateSkin(source, model),
+  updateCape: async (source: string | Blob) => await window.api.skin.updateCape(source),
+  switchCape: async (id: string) => await window.api.skin.switchCape(id),
+  deleteCape: async () => await window.api.skin.deleteCape(),
+  hideCape: async () => await window.api.skin.hideCape()
+}
+
 export const profiles = {
   get: async () => await window.api.profiles.get()
 }
@@ -176,4 +223,5 @@ export const settings = {
 export const system = {
   getInfo: () => window.api.system.getInfo()
 }
+
 

@@ -17,6 +17,29 @@ import type {
   PatcherEvents
 } from 'eml-lib'
 
+// temp types until eml-lib exports them
+export interface ISkin {
+  id: string
+  url: string
+  state: 'active' | 'inactive'
+  variant: 'classic' | 'slim'
+}
+
+export interface ICape {
+  id: string
+  url: string
+  state: 'active' | 'inactive'
+  alias: string
+}
+
+export interface IAvatar {
+  id: string
+  /**
+   * May be `null` if the `Skin` class is initialized from the main process.
+   */
+  url: string | null
+}
+
 console.log('Preload script loaded')
 
 contextBridge.exposeInMainWorld('api', {
@@ -28,7 +51,6 @@ contextBridge.exposeInMainWorld('api', {
   profiles: {
     get: (): Promise<any[]> => ipcRenderer.invoke('profiles:get')
   },
-
   game: {
     launch: (payload: { account: Account; settings: IGameSettings, profileSlug: string }) => {
       ipcRenderer.invoke('game:launch', payload)
@@ -81,6 +103,18 @@ contextBridge.exposeInMainWorld('api', {
       ipcRenderer.on('game:launch_debug', (_event, value) => callback(value)),
     patchDebug: (callback: (value: PatcherEvents['patch_debug'][0]) => void) => ipcRenderer.on('game:patch_debug', (_event, value) => callback(value))
   },
+  skin: {
+    reload: (account: Account): Promise<void | null> => ipcRenderer.invoke('skin:reload', account),
+    getSkin: (account?: Account): Promise<ISkin[] | null> => ipcRenderer.invoke('skin:get_skin', account),
+    getCape: (account?: Account): Promise<ICape[] | null> => ipcRenderer.invoke('skin:get_cape', account),
+    getAvatar: (account?: Account): Promise<IAvatar | null> => ipcRenderer.invoke('skin:get_avatar', account),
+    updateSkin: (source: string | Blob, model?: 'classic' | 'slim'): Promise<ISkin[] | null> =>
+      ipcRenderer.invoke('skin:update_skin', source, model),
+    updateCape: (source: string | Blob): Promise<ICape[] | null> => ipcRenderer.invoke('skin:update_cape', source),
+    switchCape: (id: string): Promise<ICape[] | null> => ipcRenderer.invoke('skin:switch_cape', id),
+    deleteCape: (): Promise<ICape[] | null> => ipcRenderer.invoke('skin:delete_cape'),
+    hideCape: (): Promise<ICape[] | null> => ipcRenderer.invoke('skin:hide_cape')
+  },
   server: {
     getStatus: (ip: string, port?: number): Promise<IServerStatus> => ipcRenderer.invoke('server:status', ip, port)
   },
@@ -114,4 +148,5 @@ contextBridge.exposeInMainWorld('api', {
     getInfo: (): Promise<ISystemInfo> => ipcRenderer.invoke('system:info')
   }
 })
+
 

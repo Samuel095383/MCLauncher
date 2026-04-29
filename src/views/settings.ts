@@ -1,7 +1,31 @@
 import { setView, closeOverlay } from '../state'
-import { auth, settings, system } from '../ipc'
+import { auth, settings, system, skin } from '../ipc'
 import { Dialog } from './dialog'
 import type { IGameSettings } from '../../electron/handlers/settings'
+import { IdleAnimation, SkinViewer } from 'skinview3d'
+
+// temp types until eml-lib exports them
+export interface ISkin {
+  id: string
+  url: string
+  state: 'active' | 'inactive'
+  variant: 'classic' | 'slim'
+}
+
+export interface ICape {
+  id: string
+  url: string
+  state: 'active' | 'inactive'
+  alias: string
+}
+
+export interface IAvatar {
+  id: string
+  /**
+   * May be `null` if the `Skin` class is initialized from the main process.
+   */
+  url: string | null
+}
 
 const resolutionList = [
   { label: 'Auto (default)', value: '854x480', width: 854, height: 480 },
@@ -25,6 +49,7 @@ export async function initSettings() {
   initUIListeners()
   initDualSlider(sysInfo.totalMem)
   initFormValues(sysInfo.resolution)
+  await initSkinTab()
 
   const versionElem = document.getElementById('version')
   if (versionElem) versionElem.innerText = `EML Template v${sysInfo.version}`
@@ -137,6 +162,27 @@ function initFormValues(resolution: { width: number; height: number }) {
   if (javaSelect) javaSelect.value = currentSettings.java === 'bundled' ? 'bundled' : 'custom'
 
   minInput.dispatchEvent(new Event('input'))
+}
+
+async function initSkinTab() {
+  const skinCanvas = document.getElementById('skin-container') as HTMLCanvasElement
+
+  const [_, skins, capes] = await Promise.all([skin.reload(), skin.getSkin(), skin.getCape()])
+
+  let currentSkin = skins?.find((s) => s.state === 'active') ?? { url: 'https://minotar.net/skin/steve', variant: 'classic' }
+  let currentCape = capes?.find((c) => c.state === 'active')
+
+  const skinViewer = new SkinViewer({
+    canvas: skinCanvas,
+    width: 500,
+    height: 250
+  })
+
+  skinViewer.loadSkin(currentSkin.url)
+  if (currentCape) skinViewer.loadCape(currentCape.url)
+
+  skinViewer.camera.position.set(-20, -2, 35)
+  skinViewer.animation = new IdleAnimation()
 }
 
 async function saveSettings() {
