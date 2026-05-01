@@ -98,6 +98,11 @@ function configureAppMenu() {
     },
 
     {
+      label: 'Edit',
+      submenu: [{ role: 'undo' }, { role: 'redo' }, { type: 'separator' }, { role: 'cut' }, { role: 'copy' }, { role: 'paste' }, { role: 'selectAll' }]
+    },
+
+    {
       label: 'View',
       submenu: [{ role: 'reload' }, { role: 'forceReload' }, { role: 'toggleDevTools' }, { type: 'separator' }, { role: 'togglefullscreen' }]
     }

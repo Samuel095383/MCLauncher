@@ -7,38 +7,18 @@ import type {
   CleanerEvents,
   DownloaderEvents,
   FilesManagerEvents,
+  IAvatar,
   IBackground,
   IBootstraps,
+  ICape,
   IMaintenance,
   INews,
   IServerStatus,
+  ISkin,
   JavaEvents,
   LauncherEvents,
   PatcherEvents
 } from 'eml-lib'
-
-// temp types until eml-lib exports them
-export interface ISkin {
-  id: string
-  url: string
-  state: 'active' | 'inactive'
-  variant: 'classic' | 'slim'
-}
-
-export interface ICape {
-  id: string
-  url: string
-  state: 'active' | 'inactive'
-  alias: string
-}
-
-export interface IAvatar {
-  id: string
-  /**
-   * May be `null` if the `Skin` class is initialized from the main process.
-   */
-  url: string | null
-}
 
 console.log('Preload script loaded')
 
@@ -52,7 +32,7 @@ contextBridge.exposeInMainWorld('api', {
     get: (): Promise<any[]> => ipcRenderer.invoke('profiles:get')
   },
   game: {
-    launch: (payload: { account: Account; settings: IGameSettings, profileSlug: string }) => {
+    launch: (payload: { account: Account; settings: IGameSettings; profileSlug: string }) => {
       ipcRenderer.invoke('game:launch', payload)
     },
 
@@ -108,11 +88,11 @@ contextBridge.exposeInMainWorld('api', {
     getSkin: (account?: Account): Promise<ISkin[] | null> => ipcRenderer.invoke('skin:get_skin', account),
     getCape: (account?: Account): Promise<ICape[] | null> => ipcRenderer.invoke('skin:get_cape', account),
     getAvatar: (account?: Account): Promise<IAvatar | null> => ipcRenderer.invoke('skin:get_avatar', account),
-    updateSkin: (source: string | Blob, model?: 'classic' | 'slim'): Promise<ISkin[] | null> =>
-      ipcRenderer.invoke('skin:update_skin', source, model),
-    updateCape: (source: string | Blob): Promise<ICape[] | null> => ipcRenderer.invoke('skin:update_cape', source),
+    updateSkin: (source: string | Blob, model?: 'classic' | 'slim'): Promise<ISkin[] | null> => ipcRenderer.invoke('skin:update_skin', source, model),
+    // updateCape: (source: string | Blob): Promise<ICape[] | null> => ipcRenderer.invoke('skin:update_cape', source), --- Not implemented with Microsoft accounts ---
     switchCape: (id: string): Promise<ICape[] | null> => ipcRenderer.invoke('skin:switch_cape', id),
-    deleteCape: (): Promise<ICape[] | null> => ipcRenderer.invoke('skin:delete_cape'),
+    deleteSkin: (id: string): Promise<ISkin[] | null> => ipcRenderer.invoke('skin:delete_skin', id),
+    // deleteCape: (): Promise<ICape[] | null> => ipcRenderer.invoke('skin:delete_cape'), --- Not implemented with Microsoft accounts ---
     hideCape: (): Promise<ICape[] | null> => ipcRenderer.invoke('skin:hide_cape')
   },
   server: {
@@ -148,5 +128,4 @@ contextBridge.exposeInMainWorld('api', {
     getInfo: (): Promise<ISystemInfo> => ipcRenderer.invoke('system:info')
   }
 })
-
 

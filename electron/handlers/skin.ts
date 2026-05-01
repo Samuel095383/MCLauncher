@@ -1,38 +1,55 @@
-import { ipcMain } from 'electron'
-import { type Account, Skin } from 'eml-lib'
+import { app, ipcMain } from 'electron'
+import { type Account, type ISkin, Skin } from 'eml-lib'
+import path from 'node:path'
+import fs from 'node:fs'
+import logger from 'electron-log/main'
 
 let skin: Skin | null = null
+const skinPath = path.join(app.getPath('userData'), 'skins.json')
+const DEFAULT_SKINS: ISkin[] = [
+  {
+    id: 'steve',
+    url: 'http://textures.minecraft.net/texture/31f477eb1a7beee631c2ca64d06f8f68fa93a3386d04452ab27f43acdf1b60cb',
+    variant: 'classic',
+    state: 'inactive'
+  },
+  {
+    id: 'alex',
+    url: 'http://textures.minecraft.net/texture/46acd06e8483b176e8ea39fc12fe105eb3a2a4970f5100057e9d84d4b60bdfa7',
+    variant: 'slim',
+    state: 'inactive'
+  }
+]
 
 export function registerSkinHandlers() {
-
   ipcMain.handle('skin:reload', async (_event, account?: Account) => {
     if (!skin && account) {
       skin = new Skin(account)
+      await skin.reload()
     } else if (skin) {
       await skin.reload()
     } else {
-      console.error('No account provided and no skin loaded')
+      logger.error('No account provided and no skin loaded')
       return null
     }
   })
 
   ipcMain.handle('skin:get_skin', async (_event, account?: Account) => {
-    console.log('HERE')
     if (account && !skin) {
       skin = new Skin(account)
     } else if (!account && !skin) {
-      console.error('No account provided and no skin loaded')
+      logger.error('No account provided and no skin loaded')
       return null
     }
 
-    return await skin!.getSkin()
+    return await getSkins()
   })
 
   ipcMain.handle('skin:get_cape', async (_event, account?: Account) => {
     if (account && !skin) {
       skin = new Skin(account)
     } else if (!account && !skin) {
-      console.error('No account provided and no skin loaded')
+      logger.error('No account provided and no skin loaded')
       return null
     }
 
@@ -43,40 +60,67 @@ export function registerSkinHandlers() {
     if (account && !skin) {
       skin = new Skin(account)
     } else if (!account && !skin) {
-      console.error('No account provided and no skin loaded')
+      logger.error('No account provided and no skin loaded')
       return null
     }
 
-    return await skin!.getAvatar()
+    try {
+      const avatar = await skin!.getAvatar()
+      return avatar
+    } catch (err) {
+      logger.error('Failed to get avatar:', err)
+      return null
+    }
   })
 
-  ipcMain.handle('skin:update_skin', async (_event, source: string | Blob, model?: 'classic' | 'slim') => {
+  ipcMain.handle('skin:update_skin', async (_event, source: string | ArrayBuffer, model?: 'classic' | 'slim') => {
     if (!skin) {
       return { success: false, error: 'No skin loaded' }
     }
 
+    let skinSource: string | Blob
+
+    if (source instanceof ArrayBuffer) {
+      skinSource = new Blob([source])
+    } else if (typeof source === 'string' && source.startsWith('data:')) {
+      const res = await fetch(source)
+      skinSource = await res.blob()
+    } else {
+      skinSource = source
+    }
+
     try {
-      await skin.updateSkin(source, model)
-      return skin.getSkin()
+      await skin.updateSkin(skinSource, model)
     } catch (err: any) {
-      console.error('Failed to update skin:', err)
+      logger.error('Failed to update skin:', err)
+      return null
+    }
+
+    const newSkins = await skin.getSkin()
+
+    await appendSkin(...newSkins)
+
+    return await getSkins(true, newSkins)
+  })
+
+  ipcMain.handle('skin:delete_skin', async (_event, id: string) => {
+    if (!fs.existsSync(skinPath)) {
+      return null
+    }
+
+    try {
+      const data = JSON.parse(fs.readFileSync(skinPath, 'utf-8'))
+      const newSkins = data.filter((s: ISkin) => s.id !== id || s.state === 'active')
+      fs.writeFileSync(skinPath, JSON.stringify(newSkins, null, 2))
+      return await getSkins(true, newSkins)
+    } catch (err: any) {
+      logger.error('Failed to delete skin from cache:', err)
       return null
     }
   })
 
-  ipcMain.handle('skin:update_cape', async (_event, source: string | Blob) => {
-    if (!skin) {
-      return { success: false, error: 'No skin loaded' }
-    }
-
-    try {
-      await skin.updateCape(source)
-      return skin.getCape()
-    } catch (err: any) {
-      console.error('Failed to update cape:', err)
-      return null
-    }
-  })
+  // ipcMain.handle('skin:update_cape', async (_event, source: string | Blob) => {
+  // }) --- Not implemented with Microsoft accounts ---
 
   ipcMain.handle('skin:switch_cape', async (_event, id: string) => {
     if (!skin) {
@@ -87,24 +131,13 @@ export function registerSkinHandlers() {
       await skin.switchCape(id)
       return skin.getCape()
     } catch (err: any) {
-      console.error('Failed to switch cape:', err)
+      logger.error('Failed to switch cape:', err)
       return null
     }
   })
 
-  ipcMain.handle('skin:delete_cape', async (_event) => {
-    if (!skin) {
-      return { success: false, error: 'No skin loaded' }
-    }
-
-    try {
-      await skin.deleteCape()
-      return skin.getCape()
-    } catch (err: any) {
-      console.error('Failed to delete cape:', err)
-      return null
-    }
-  })
+  // ipcMain.handle('skin:delete_cape', async (_event) => {
+  // }) --- Not implemented with Microsoft accounts ---
 
   ipcMain.handle('skin:hide_cape', async (_event) => {
     if (!skin) {
@@ -115,9 +148,65 @@ export function registerSkinHandlers() {
       await skin.hideCape()
       return skin.getCape()
     } catch (err: any) {
-      console.error('Failed to hide cape:', err)
+      logger.error('Failed to hide cape:', err)
       return null
     }
   })
 }
+
+async function getSkins(skipFetch = false, inject: ISkin[] = []) {
+  let skins: ISkin[] = inject
+
+  if (!skipFetch) {
+    try {
+      const data = (await skin!.getSkin()) as ISkin[]
+      skins = skins.concat(data.filter((s: ISkin) => !skins.some((existingSkin) => existingSkin.url === s.url && existingSkin.variant === s.variant)))
+    } catch (err) {
+      logger.warn('Failed to get skins:', err)
+    }
+  }
+
+  try {
+    if (fs.existsSync(skinPath)) {
+      const data = JSON.parse(fs.readFileSync(skinPath, 'utf-8') || '[]').map((s: ISkin) => {
+        return {
+          id: s.id,
+          url: s.url,
+          variant: s.variant,
+          state: 'inactive'
+        }
+      }) as ISkin[]
+      skins = skins.concat(data.filter((s: ISkin) => !skins.some((existingSkin) => existingSkin.url === s.url && existingSkin.variant === s.variant)))
+    } else {
+      fs.writeFileSync(skinPath, JSON.stringify(skins, null, 2))
+    }
+  } catch (err) {
+    logger.warn('Failed to read skins from cache:', err)
+  }
+
+  skins = skins.concat(DEFAULT_SKINS.filter((s) => !skins.some((existingSkin) => existingSkin.url === s.url && existingSkin.variant === s.variant)))
+
+  return skins
+}
+
+async function appendSkin(...skins: ISkin[]) {
+  if (!fs.existsSync(skinPath)) {
+    try {
+      fs.writeFileSync(skinPath, JSON.stringify(skins, null, 2))
+    } catch (err: any) {
+      logger.error('Failed to write skin to cache:', err)
+    }
+  } else {
+    try {
+      const data = JSON.parse(fs.readFileSync(skinPath, 'utf-8'))
+      const newSkins = skins.concat(
+        data.filter((s: ISkin) => !skins.some((existingSkin) => existingSkin.url === s.url && existingSkin.variant === s.variant))
+      )
+      fs.writeFileSync(skinPath, JSON.stringify(newSkins, null, 2))
+    } catch (err: any) {
+      logger.error('Failed to update skin cache:', err)
+    }
+  }
+}
+
 

@@ -1,7 +1,6 @@
 import { setBlockingView, setUser, setView } from './state'
 import { auth, background, bootstraps, maintenance, skin } from './ipc'
 import logger from 'electron-log/renderer'
-import _mockSession from './_mock-msa'
 
 const DEFAULT_BACKGROUND = '/src/static/images/bg.png'
 const dateFormatOptions: Intl.DateTimeFormatOptions = {
@@ -89,26 +88,15 @@ export async function bootstrap() {
   try {
     const [_, session] = await Promise.all([
       preloadImage(bgUrl),
-      // auth.refresh(),
-      Promise.resolve(_mockSession)
+      auth.refresh(),
     ])
 
-    
     if (bgElement) bgElement.style.backgroundImage = `url('${bgUrl}')`
-    
+
     if (session.success) {
-      const [__, skins, capes, avatar] = await Promise.all([
-        skin.reload(session.account),
-        skin.getSkin(),
-        skin.getCape(),
-        skin.getAvatar()
-      ])
-      
-      setUser(session.account, {
-        skin: skins?.find((s) => s.state === 'active') ?? null,
-        cape: capes?.find((c) => c.state === 'active') ?? null,
-        avatar: avatar ?? null
-      })
+      const [__, skins, capes, avatar] = await Promise.all([skin.reload(session.account), skin.getSkin(), skin.getCape(), skin.getAvatar()])
+
+      setUser(session.account, { skins, capes, avatar })
       setView('home')
     } else {
       setView('login')

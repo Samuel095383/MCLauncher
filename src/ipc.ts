@@ -15,32 +15,11 @@ import type {
   JavaEvents,
   LauncherEvents,
   PatcherEvents,
-  IProfile
+  IProfile,
+  ISkin,
+  ICape,
+  IAvatar
 } from 'eml-lib'
-
-// temp types until eml-lib exports them
-export interface ISkin {
-  id: string
-  url: string
-  state: 'active' | 'inactive'
-  variant: 'classic' | 'slim'
-}
-
-export interface ICape {
-  id: string
-  url: string
-  state: 'active' | 'inactive'
-  alias: string
-}
-
-export interface IAvatar {
-  id: string
-  /**
-   * May be `null` if the `Skin` class is initialized from the main process.
-   */
-  url: string | null
-}
-
 
 declare global {
   interface Window {
@@ -55,10 +34,11 @@ declare global {
         getSkin: (account?: Account) => Promise<ISkin[] | null>
         getCape: (account?: Account) => Promise<ICape[] | null>
         getAvatar: (account?: Account) => Promise<IAvatar | null>
-        updateSkin: (source: string | Blob, model?: 'classic' | 'slim') => Promise<ISkin[] | null>
-        updateCape: (source: string | Blob) => Promise<ICape[] | null>
+        updateSkin: (source: string | ArrayBuffer, model?: 'classic' | 'slim') => Promise<ISkin[] | null>
+        // updateCape: (source: string | Blob) => Promise<ICape[] | null> --- Not implemented with Microsoft accounts ---
         switchCape: (id: string) => Promise<ICape[] | null>
-        deleteCape: () => Promise<ICape[] | null>
+        deleteSkin: (id: string) => Promise<ISkin[] | null>
+        // deleteCape: () => Promise<ICape[] | null> --- Not implemented with Microsoft accounts ---
         hideCape: () => Promise<ICape[] | null>
       }
       profiles: {
@@ -146,10 +126,11 @@ export const skin = {
   getSkin: async (account?: Account) => await window.api.skin.getSkin(account),
   getCape: async (account?: Account) => await window.api.skin.getCape(account),
   getAvatar: async (account?: Account) => await window.api.skin.getAvatar(account),
-  updateSkin: async (source: string | Blob, model: 'classic' | 'slim') => await window.api.skin.updateSkin(source, model),
-  updateCape: async (source: string | Blob) => await window.api.skin.updateCape(source),
+  updateSkin: async (source: string | ArrayBuffer, model: 'classic' | 'slim') => await window.api.skin.updateSkin(source, model),
+  // updateCape: async (source: string | Blob) => await window.api.skin.updateCape(source), --- Not implemented with Microsoft accounts ---
   switchCape: async (id: string) => await window.api.skin.switchCape(id),
-  deleteCape: async () => await window.api.skin.deleteCape(),
+  deleteSkin: async (id: string) => await window.api.skin.deleteSkin(id),
+  // deleteCape: async () => await window.api.skin.deleteCape(), --- Not implemented with Microsoft accounts ---
   hideCape: async () => await window.api.skin.hideCape()
 }
 

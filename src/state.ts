@@ -1,56 +1,35 @@
-import type { Account } from 'eml-lib'
+import type { Account, IAvatar, ICape, ISkin } from 'eml-lib'
 import logger from 'electron-log/renderer'
-
-// temp types until eml-lib exports them
-export interface ISkin {
-  id: string
-  url: string
-  state: 'active' | 'inactive'
-  variant: 'classic' | 'slim'
-}
-
-export interface ICape {
-  id: string
-  url: string
-  state: 'active' | 'inactive'
-  alias: string
-}
-
-export interface IAvatar {
-  id: string
-  /**
-   * May be `null` if the `Skin` class is initialized from the main process.
-   */
-  url: string | null
-}
+import shared from './shared'
 
 export type ViewName = 'loading' | 'login' | 'home' | 'settings'
 export type BlockingViewName = 'maintenance' | 'update'
 
-let currentAccount: Account | null = null
-let currentAssets: { skin: ISkin | null; cape: ICape | null; avatar: IAvatar | null } | null = null
-
 export function getUser() {
-  return currentAccount
+  return shared.account
 }
 
-export function setUser(account: Account, assets: { skin: ISkin | null; cape: ICape | null; avatar: IAvatar | null }) {
-  currentAccount = account
-  currentAssets = assets
-  updateUserInterface()
+export async function setUser(account: Account, assets: { skins: ISkin[] | null; capes: ICape[] | null; avatar: IAvatar | null }) {
+  shared.account = account
+  shared.skins = assets.skins
+  shared.capes = assets.capes
+  shared.avatar = assets.avatar
+  await updateUserInterface()
 }
 
 export function logout() {
-  currentAccount = null
-  currentAssets = null
+  shared.account = null
+  shared.skins = null
+  shared.capes = null
+  shared.avatar = null
   const nameEl = document.getElementById('user-name')
   if (nameEl) nameEl.innerText = ''
 }
 
-function updateUserInterface() {
-  if (!currentAccount || !currentAssets) return
+async function updateUserInterface() {
+  if (!shared.account || !shared.skins) return
 
-  logger.log('Updating UI for user:', currentAccount.name)
+  logger.log('Updating UI for user:', shared.account.name)
 
   const nameEl = document.getElementById('user-name')
   const avatarEl = document.getElementById('user-avatar') as HTMLImageElement
@@ -59,12 +38,14 @@ function updateUserInterface() {
   const typeSettingsEl = document.getElementById('settings-user-type')
   const avatarSettingsEl = document.getElementById('settings-user-avatar') as HTMLImageElement
 
-  if (nameEl) nameEl.innerText = currentAccount.name
-  if (avatarEl) avatarEl.src = currentAssets.avatar?.url ?? 'https://minotar.net/avatar/steve/256.png'
-  if (nameSettingsEl) nameSettingsEl.innerText = currentAccount.name
-  if (uuidSettingsEl) uuidSettingsEl.innerText = `UUID: ${currentAccount.uuid}`
-  if (typeSettingsEl) typeSettingsEl.innerHTML = getAccountIcon(currentAccount.meta.type)
-  if (avatarSettingsEl) avatarSettingsEl.src = currentAssets.avatar?.url ?? 'https://minotar.net/avatar/steve/256.png'
+  if (nameEl) nameEl.innerText = shared.account.name
+  if (avatarEl) avatarEl.src = shared.avatar?.url ?? 'https://minotar.net/avatar/steve/256.png'
+  if (nameSettingsEl) nameSettingsEl.innerText = shared.account.name
+  if (uuidSettingsEl) uuidSettingsEl.innerText = `UUID: ${shared.account.uuid}`
+  if (typeSettingsEl) typeSettingsEl.innerHTML = getAccountIcon(shared.account.meta.type)
+  if (avatarSettingsEl) avatarSettingsEl.src = shared.avatar?.url ?? 'https://minotar.net/avatar/steve/256.png'
+
+  shared.resetSkinViews()
 }
 
 export function setView(view: ViewName) {
@@ -124,5 +105,6 @@ function resetSettingsTab() {
   tabButtons[0].classList.add('active')
   tabContents[0].classList.add('active')
 }
+
 
 
