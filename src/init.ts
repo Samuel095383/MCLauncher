@@ -1,7 +1,6 @@
 import { setBlockingView, setUser, setView } from './state'
-import { auth, background, bootstraps, maintenance } from './ipc'
+import { auth, background, bootstraps, maintenance, skin } from './ipc'
 import logger from 'electron-log/renderer'
-// import _mockSession from './_mock-msa'
 
 const DEFAULT_BACKGROUND = '/src/static/images/bg.png'
 const dateFormatOptions: Intl.DateTimeFormatOptions = {
@@ -89,20 +88,21 @@ export async function bootstrap() {
   try {
     const [_, session] = await Promise.all([
       preloadImage(bgUrl),
-      auth.refresh()
-      // Promise.resolve(_mockSession)
+      auth.refresh(),
     ])
 
     if (bgElement) bgElement.style.backgroundImage = `url('${bgUrl}')`
 
     if (session.success) {
-      setUser(session.account)
+      const [__, skins, capes, avatar] = await Promise.all([skin.reload(session.account), skin.getSkin(), skin.getCape(), skin.getAvatar()])
+
+      setUser(session.account, { skins, capes, avatar })
       setView('home')
     } else {
       setView('login')
     }
   } catch (err) {
-    logger.error('Error while itializing launcher:', err)
+    logger.error('Error while initializing launcher:', err)
     if (bgElement) bgElement.style.backgroundImage = `url('${DEFAULT_BACKGROUND}')`
     setView('login')
   } finally {

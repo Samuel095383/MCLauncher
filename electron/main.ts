@@ -10,6 +10,7 @@ import { registerMaintenanceHandlers } from './handlers/maintenance'
 import { registerBootstrapHandlers } from './handlers/bootstraps'
 import logger from 'electron-log/main'
 import { registerProfilesHandlers } from './handlers/profiles'
+import { registerSkinHandlers } from './handlers/skin'
 
 const APP_TITLE = 'EML Template'
 const BG_COLOR = '#121212'
@@ -97,6 +98,11 @@ function configureAppMenu() {
     },
 
     {
+      label: 'Edit',
+      submenu: [{ role: 'undo' }, { role: 'redo' }, { type: 'separator' }, { role: 'cut' }, { role: 'copy' }, { role: 'paste' }, { role: 'selectAll' }]
+    },
+
+    {
       label: 'View',
       submenu: [{ role: 'reload' }, { role: 'forceReload' }, { role: 'toggleDevTools' }, { type: 'separator' }, { role: 'togglefullscreen' }]
     }
@@ -115,6 +121,7 @@ app.whenReady().then(() => {
     registerAuthHandlers(mainWindow)
     registerProfilesHandlers()
     registerServerHandlers()
+    registerSkinHandlers()
     registerNewsHandlers()
     registerBackgroundHandlers()
     registerMaintenanceHandlers()
@@ -127,6 +134,4 @@ app.whenReady().then(() => {
 app.on('window-all-closed', () => {
   app.quit()
 })
-
-
 
