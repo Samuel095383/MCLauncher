@@ -154,12 +154,15 @@ export function registerSkinHandlers() {
   })
 }
 
+/**
+ * If `skipFetch` is `true`, `inject` must include the active skin.
+ */
 async function getSkins(skipFetch = false, inject: ISkin[] = []) {
   let skins: ISkin[] = inject
 
   if (!skipFetch) {
     try {
-      const data = (await skin!.getSkin()) as ISkin[]
+      const data = (await skin!.getSkin()) as ISkin[] // must and should contains an active skin
       skins = skins.concat(data.filter((s: ISkin) => !skins.some((existingSkin) => existingSkin.url === s.url && existingSkin.variant === s.variant)))
     } catch (err) {
       logger.warn('Failed to get skins:', err)
@@ -172,8 +175,8 @@ async function getSkins(skipFetch = false, inject: ISkin[] = []) {
         return {
           id: s.id,
           url: s.url,
-          variant: s.variant,
-          state: 'inactive'
+          state: 'inactive' as const,
+          variant: s.variant
         }
       }) as ISkin[]
       skins = skins.concat(data.filter((s: ISkin) => !skins.some((existingSkin) => existingSkin.url === s.url && existingSkin.variant === s.variant)))
@@ -190,6 +193,7 @@ async function getSkins(skipFetch = false, inject: ISkin[] = []) {
 }
 
 async function appendSkin(...skins: ISkin[]) {
+  const isActive: boolean = skins.some((s) => s.state === 'active')
   if (!fs.existsSync(skinPath)) {
     try {
       fs.writeFileSync(skinPath, JSON.stringify(skins, null, 2))
@@ -198,7 +202,14 @@ async function appendSkin(...skins: ISkin[]) {
     }
   } else {
     try {
-      const data = JSON.parse(fs.readFileSync(skinPath, 'utf-8'))
+      const data = JSON.parse(fs.readFileSync(skinPath, 'utf-8')).map((s: ISkin) => {
+        return {
+          id: s.id,
+          url: s.url,
+          state: isActive ? 'inactive' : (s.state as 'active' | 'inactive'),
+          variant: s.variant
+        }
+      })
       const newSkins = skins.concat(
         data.filter((s: ISkin) => !skins.some((existingSkin) => existingSkin.url === s.url && existingSkin.variant === s.variant))
       )
@@ -208,5 +219,4 @@ async function appendSkin(...skins: ISkin[]) {
     }
   }
 }
-
 

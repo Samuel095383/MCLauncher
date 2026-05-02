@@ -276,6 +276,7 @@ async function addSkin() {
     }
 
     shared.skins = result
+    shared.resetMainView()
     shared.resetSkinViews()
   } catch (err) {
     await Dialog.show('An error occurred while adding the skin. Please try again in few minutes.', [{ text: 'Close', type: 'ok' }])
@@ -286,5 +287,4 @@ async function addSkin() {
 function getAvailableResolutions(systemResolution: { width: number; height: number }) {
   return resolutionList.filter((res) => res.width <= systemResolution.width && res.height <= systemResolution.height)
 }
-
 

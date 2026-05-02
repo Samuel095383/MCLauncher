@@ -45,7 +45,9 @@ async function updateUserInterface() {
   if (typeSettingsEl) typeSettingsEl.innerHTML = getAccountIcon(shared.account.meta.type)
   if (avatarSettingsEl) avatarSettingsEl.src = shared.avatar?.url ?? 'https://minotar.net/avatar/steve/256.png'
 
+  shared.resetMainView()
   shared.resetSkinViews()
+  shared.resetCapesViews()
 }
 
 export function setView(view: ViewName) {
