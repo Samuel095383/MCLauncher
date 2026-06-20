@@ -1,23 +1,24 @@
 {
-  "name": "eml-template",
-  "productName": "EML Template",
-  "author": "GoldFrite",
-  "description": "Template launcher with EML Lib",
+  "name": "novyzlab-launcher",
+  "productName": "NovyzLab Launcher",
+  "author": "Samuel095383",
+  "description": "Launcher for vanilla+ server",
   "private": true,
-  "version": "1.2.0",
+  "version": "0.0.1",
   "license": "MIT",
   "main": "dist-electron/main.js",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
-    "release:win": "npm run build && electron-builder --win",
-    "release:mac": "npm run build && electron-builder --mac",
-    "release:lin": "npm run build && electron-builder --linux"
+    "build": "tsc && vite build && electron-builder",
+    "build:win": "tsc && vite build && electron-builder --win",
+    "build:mac": "tsc && vite build && electron-builder --mac",
+    "build:mac-universal": "tsc && vite build && electron-builder --mac --universal",
+    "build:lin": "tsc && vite build && electron-builder --linux"
   },
   "build": {
-    "appId": "com.eml.template",
-    "productName": "EML Template",
-    "copyright": "Copyright © 2026 EML",
+    "appId": "net.novyzlab.launcher",
+    "productName": "Novyzlab Launcher",
+    "copyright": "Copyright © 2026 Novyzlab Corp",
     "directories": {
       "output": "release",
       "buildResources": "build"
@@ -40,12 +41,12 @@
     ],
     "publish": {
       "provider": "generic",
-      "url": "https://emlproject.pages.dev/"
+      "url": "https://vanillaplus.novyzlab.net/"
     },
     "win": {
       "target": "nsis",
       "icon": "build/icon.ico",
-      "legalTrademarks": "EML Project"
+      "legalTrademarks": "Novyzlab Corp"
     },
     "nsis": {
       "oneClick": false,
@@ -53,10 +54,10 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "EML Template",
+      "shortcutName": "Novyzlab Launcher",
       "deleteAppDataOnUninstall": true,
       "artifactName": "${productName}-Setup-${version}.${ext}",
-      "uninstallDisplayName": "EML Template"
+      "uninstallDisplayName": "Novyzlab Launcher"
     },
     "mac": {
       "target": [
@@ -102,7 +103,7 @@
       ],
       "icon": "build/icon.png",
       "category": "Game",
-      "description": "Template launcher with EML Lib",
+      "description": "Novyzlab Launcher",
       "artifactName": "${productName}-${version}.${ext}"
     }
   },
@@ -116,12 +117,17 @@
   },
   "devDependencies": {
     "@types/dompurify": "^3.0.5",
-    "electron": "^41.5.0",
+    "electron": "^41.8.0",
     "electron-builder": "^26.8.1",
     "prettier": "^3.8.3",
     "sass-embedded": "^1.99.0",
     "typescript": "^6.0.3",
     "vite": "^8.0.10",
     "vite-plugin-electron": "^0.29.1"
+  },
+  "allowScripts": {
+    "@parcel/watcher@2.5.6": true,
+    "electron@41.8.0": true,
+    "electron-winstaller@5.4.0": true
   }
 }

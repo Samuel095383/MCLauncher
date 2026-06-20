@@ -1,1 +1,1 @@
-export const ADMINTOOL_URL = 'http://localhost:5173'
+export const ADMINTOOL_URL = 'https://admintool.home-samuel.novyzlab.net'

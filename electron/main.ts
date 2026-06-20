@@ -12,7 +12,7 @@ import logger from 'electron-log/main'
 import { registerProfilesHandlers } from './handlers/profiles'
 import { registerSkinHandlers } from './handlers/skin'
 
-const APP_TITLE = 'EML Template'
+const APP_TITLE = 'VanillaLauncher'
 const BG_COLOR = '#121212'
 
 let mainWindow: BrowserWindow | null = null
