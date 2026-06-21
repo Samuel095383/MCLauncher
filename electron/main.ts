@@ -67,7 +67,7 @@ function configureAppMenu() {
     applicationName: APP_TITLE,
     applicationVersion: app.getVersion(),
     version: 'Build 2026.1',
-    copyright: 'Copyright © 2026 EML',
+    copyright: 'Copyright © 2026 Novyzlab corp',
     credits: 'Developed with EML Lib & Electron',
     iconPath: path.join(__dirname, '../build/icon.png')
   })
