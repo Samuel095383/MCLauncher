@@ -13,16 +13,16 @@ jobs:
         include:
           - os: windows-latest
             script: build:win
-            ext: exe
+            ext: exe blockmap yml
           - os: macos-latest
             script: build:mac
-            ext: dmg
+            ext: dmg blockmap yml
           - os: macos-latest
             script: build:mac-universal
-            ext: dmg
+            ext: dmg blockmap yml
           - os: ubuntu-latest
             script: build:lin
-            ext: AppImage
+            ext: AppImage blockmap yml
     steps:
       - uses: actions/checkout@v4
       
