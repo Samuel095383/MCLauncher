@@ -13,16 +13,16 @@ jobs:
         include:
           - os: windows-latest
             script: build:win
-            ext: exe, blockmap, yml
+            ext: exe
           - os: macos-latest
             script: build:mac
-            ext: dmg, blockmap, yml
+            ext: dmg
           - os: macos-latest
             script: build:mac-universal
-            ext: dmg, blockmap, yml
+            ext: dmg
           - os: ubuntu-latest
             script: build:lin
-            ext: AppImage, blockmap, yml
+            ext: AppImage
     steps:
       - uses: actions/checkout@v4
       
@@ -44,4 +44,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: launcher-${{ matrix.os }}
-          path: release/*.${{ matrix.ext }}
+          # Use multi-line strings to match the installer, blockmap, and yml files
+          path: |
+            release/*.${{ matrix.ext }}
+            release/*.blockmap
+            release/*.yml
